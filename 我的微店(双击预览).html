@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>潮鞋服饰精品店 | Trendy Shoes & Apparel</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f4f4; margin: 0; padding-bottom: 50px; }
+        .header { background: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
+        .header-title { font-weight: bold; font-size: 18px; }
+        
+        /* 语言切换按钮样式 */
+        .lang-switch { background: #333; color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: none; }
+
+        .goods-list { display: flex; flex-wrap: wrap; padding: 10px; justify-content: space-between; }
+        .goods-item { width: calc(50% - 15px); background: #fff; border-radius: 12px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; }
+        .goods-img { width: 100%; height: 180px; object-fit: contain; background: #fff; border-bottom: 1px solid #f9f9f9; }
+        .goods-info { padding: 12px; }
+        .goods-name { font-size: 14px; color: #333; height: 40px; overflow: hidden; display: block; line-height: 20px; }
+        .price-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .goods-price { color: #ff4400; font-size: 16px; font-weight: bold; }
+        .goods-stock { color: #999; font-size: 11px; }
+        .buy-btn { margin-top: 12px; background: #333; color: #fff; text-align: center; padding: 8px 0; border-radius: 20px; font-size: 12px; }
+
+        /* 弹窗样式 */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); overflow-y: auto; }
+        .modal-content { background-color: #fff; margin: 2% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 15px; position: relative; }
+        .close { position: absolute; right: 20px; top: 10px; color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 10; }
+        
+        /* 轮播图 */
+        .swiper-container { width: 100%; height: 350px; position: relative; overflow: hidden; border-radius: 10px; margin-bottom: 15px; background: #f9f9f9; }
+        .swiper-wrapper { display: flex; transition: transform 0.3s ease; height: 100%; }
+        .swiper-slide { min-width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .swiper-slide img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .swiper-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.3); color: #fff; padding: 10px; border-radius: 50%; cursor: pointer; user-select: none; }
+        .swiper-prev { left: 10px; }
+        .swiper-next { right: 10px; }
+        .swiper-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; }
+        .dot { width: 8px; height: 8px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+        .dot.active { background: #fff; }
+
+        .modal-name { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: block; }
+        .modal-price-box { background: #fff5f2; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .modal-price { color: #ff4400; font-size: 24px; font-weight: bold; }
+        .price-tip { font-size: 12px; color: #ff4400; margin-left: 5px; }
+        
+        .detail-section { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .detail-title { font-size: 14px; color: #666; margin-bottom: 10px; display: block; font-weight: bold; }
+        .size-list { display: flex; flex-wrap: wrap; gap: 10px; }
+        .size-item { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; text-align: center; min-width: 80px; transition: all 0.2s; }
+        .size-item.selected { border-color: #ff4400; color: #ff4400; background: #fff5f2; font-weight: bold; }
+        .size-item.out { color: #ccc; border-color: #eee; text-decoration: line-through; pointer-events: none; }
+        .size-price { font-size: 12px; display: block; margin-top: 4px; color: #999; }
+
+        .contact-bar { margin-top: 25px; background: #333; color: #fff; text-align: center; padding: 15px; border-radius: 12px; font-size: 16px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title" id="headerTitle">潮鞋服饰精品店</div>
+        <button class="lang-switch" onclick="toggleLanguage()" id="langBtn">English</button>
+    </div>
+    <div class="goods-list" id="list"></div>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div class="swiper-container">
+                <div id="swiperWrapper" class="swiper-wrapper"></div>
+                <div class="swiper-btn swiper-prev" onclick="prevSlide()">&#10094;</div>
+                <div class="swiper-btn swiper-next" onclick="nextSlide()">&#10095;</div>
+                <div id="swiperDots" class="swiper-dots"></div>
+            </div>
+            <span id="modalName" class="modal-name"></span>
+            <div class="modal-price-box">
+                <span id="modalPrice" class="modal-price">￥--</span>
+                <span id="priceTip" class="price-tip"></span>
+            </div>
+            <div class="detail-section">
+                <span class="detail-title" id="sizeTitle">请选择尺码：</span>
+                <div id="modalSizes" class="size-list"></div>
+            </div>
+            <div class="contact-bar" id="contactBtn" onclick="contactSeller()">
+                立即加微信咨询
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 增加语言包配置
+        const i18n = {
+            zh: {
+                title: "潮鞋服饰精品店",
+                langBtn: "English",
+                from: "起",
+                stock: "库存",
+                detailBtn: "查看详情 / 选码",
+                sizeTitle: "请选择尺码（不同尺码价格不同）：",
+                stockTip: "当前尺码存{n}件",
+                contact: "立即加微信咨询",
+                outOfStock: "缺货",
+                contactAlert: "请加微信咨询购买：YOUR_WECHAT_ID"
+            },
+            en: {
+                title: "Trendy Shoes & Apparel",
+                langBtn: "中文版",
+                from: "Up",
+                stock: "Stock",
+                detailBtn: "Details / Select Size",
+                sizeTitle: "Select Size (Prices vary by size):",
+                stockTip: "{n} items in stock",
+                contact: "Contact via WeChat",
+                outOfStock: "Out of Stock",
+                contactAlert: "Please add WeChat to buy: YOUR_WECHAT_ID"
+            }
+        };
+
+        let currentLang = 'zh';
+
+        const goods = [
+          { 
+            id: 1, 
+            name_zh: "经典款白色运动鞋", 
+            name_en: "Classic White Sneakers",
+            images: [
+                "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800",
+                "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800"
+            ],
+            sizes: [
+                { size: "40", stock: 2, price: 599 },
+                { size: "41", stock: 5, price: 619 },
+                { size: "42", stock: 3, price: 639 }
+            ]
+          },
+          { 
+            id: 2, 
+            name_zh: "夏季透气网面跑步鞋", 
+            name_en: "Summer Breathable Running Shoes",
+            images: ["https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?w=800"],
+            sizes: [
+                { size: "38", stock: 10, price: 388 },
+                { size: "39", stock: 8, price: 398 }
+            ]
+          }
+        ];
+
+        let currentSlide = 0;
+        let currentImages = [];
+
+        function renderList() {
+            const list = document.getElementById('list');
+            const lang = i18n[currentLang];
+            list.innerHTML = '';
+            
+            document.getElementById('headerTitle').innerText = lang.title;
+            document.getElementById('langBtn').innerText = lang.langBtn;
+
+            goods.forEach(item => {
+                const minPrice = Math.min(...item.sizes.map(s => s.price));
+                const totalStock = item.sizes.reduce((sum, s) => sum + s.stock, 0);
+                const name = currentLang === 'zh' ? item.name_zh : item.name_en;
+                
+                list.innerHTML += `
+                    <div class="goods-item" onclick="openModal(${item.id})">
+                        <img class="goods-img" src="${item.images[0]}">
+                        <div class="goods-info">
+                            <span class="goods-name">${name}</span>
+                            <div class="price-row">
+                                <span class="goods-price">￥${minPrice} ${lang.from}</span>
+                                <span class="goods-stock">${lang.stock}: ${totalStock}</span>
+                            </div>
+                            <div class="buy-btn">${lang.detailBtn}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            renderList();
+            closeModal();
+        }
+
+        function openModal(id) {
+            const item = goods.find(g => g.id === id);
+            const lang = i18n[currentLang];
+            const name = currentLang === 'zh' ? item.name_zh : item.name_en;
+            
+            document.getElementById('modalName').innerText = name;
+            document.getElementById('sizeTitle').innerText = lang.sizeTitle;
+            document.getElementById('contactBtn').innerText = lang.contact;
+            
+            currentImages = item.images;
+            currentSlide = 0;
+            updateSwiper();
+
+            const sizeList = document.getElementById('modalSizes');
+            sizeList.innerHTML = '';
+            const minPrice = Math.min(...item.sizes.map(s => s.price));
+            document.getElementById('modalPrice').innerText = '￥' + minPrice;
+            document.getElementById('priceTip').innerText = `(${lang.from})`;
+
+            item.sizes.forEach(s => {
+                const isOut = s.stock === 0;
+                sizeList.innerHTML += `
+                    <div class="size-item ${isOut ? 'out' : ''}" onclick="selectSize(this, ${s.price}, ${s.stock})">
+                        ${s.size} ${currentLang === 'zh' ? '码' : ''}
+                        <span class="size-price">￥${s.price}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('myModal').style.display = "block";
+        }
+
+        function selectSize(element, price, stock) {
+            const lang = i18n[currentLang];
+            document.querySelectorAll('.size-item').forEach(i => i.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById('modalPrice').innerText = '￥' + price;
+            document.getElementById('priceTip').innerText = `(${lang.stockTip.replace('{n}', stock)})`;
+        }
+
+        function updateSwiper() {
+            const wrapper = document.getElementById('swiperWrapper');
+            const dots = document.getElementById('swiperDots');
+            wrapper.innerHTML = currentImages.map(img => `<div class="swiper-slide"><img src="${img}"></div>`).join('');
+            dots.innerHTML = currentImages.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}"></div>`).join('');
+            wrapper.style.transform = `translateX(0)`;
+        }
+
+        function moveSlide(n) {
+            currentSlide = (currentSlide + n + currentImages.length) % currentImages.length;
+            document.getElementById('swiperWrapper').style.transform = `translateX(-${currentSlide * 100}%)`;
+            document.querySelectorAll('.dot').forEach((dot, i) => dot.classList.toggle('active', i === currentSlide));
+        }
+
+        function prevSlide() { moveSlide(-1); }
+        function nextSlide() { moveSlide(1); }
+        function closeModal() { document.getElementById('myModal').style.display = "none"; }
+        function contactSeller() { alert(i18n[currentLang].contactAlert); }
+        window.onclick = function(e) { if (e.target == document.getElementById('myModal')) closeModal(); }
+
+        renderList();
+    </script>
+</body>
+</html>
